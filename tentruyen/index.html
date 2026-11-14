@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="vi">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chuyển Đổi Định Dạng Tên</title>
+    <style>
+        :root {
+            --bg-color: #0f0f0f;
+            --card-bg: #212121;
+            --border-color: #3f3f3f;
+            --text-color: #f1f1f1;
+            --text-secondary: #aaa;
+            --accent-color: #3ea6ff;
+            --accent-hover: #65b8ff;
+            --success-color: #2ba640;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 650px;
+            background-color: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 24px;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.6);
+        }
+
+        h1 {
+            font-size: 1.25rem;
+            margin-bottom: 20px;
+            font-weight: 600;
+            color: var(--text-color);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            font-size: 0.875rem;
+            color: var(--text-secondary);
+            margin-bottom: 8px;
+        }
+
+        textarea {
+            width: 100%;
+            height: 130px;
+            background-color: #121212;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            color: var(--text-color);
+            padding: 12px;
+            font-size: 0.95rem;
+            resize: vertical;
+            outline: none;
+            transition: border-color 0.2s;
+            line-height: 1.5;
+        }
+
+        textarea:focus {
+            border-color: var(--accent-color);
+        }
+
+        .output-box {
+            background-color: #121212;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 14px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+        }
+
+        .output-text {
+            flex-grow: 1;
+            font-family: monospace;
+            font-size: 1rem;
+            color: #e0e0e0;
+            word-break: break-all;
+            user-select: all;
+        }
+
+        button {
+            background-color: var(--accent-color);
+            color: #0f0f0f;
+            border: none;
+            border-radius: 6px;
+            padding: 10px 18px;
+            font-weight: 600;
+            font-size: 0.9rem;
+            cursor: pointer;
+            transition: background-color 0.2s, transform 0.1s;
+            white-space: nowrap;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        button:hover {
+            background-color: var(--accent-hover);
+        }
+
+        button:active {
+            transform: scale(0.97);
+        }
+
+        button.copied {
+            background-color: var(--success-color);
+            color: #fff;
+        }
+
+        .hint {
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+            margin-top: 6px;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <h1>🌙 Trình Chuyển Đổi Định Dạng Tên</h1>
+
+        <div class="form-group">
+            <label for="input-text">Nhập văn bản (hỗ trợ xuống dòng, dấu <code>|</code> hoặc copy trực tiếp từ Excel
+                bằng phím Tab):</label>
+            <textarea id="input-text" placeholder="Quang Âm Chi Ngoại | 光阴之外	Nhĩ Căn | 耳根"></textarea>
+            <div class="hint">💡 Dán trực tiếp từ Excel hoặc gõ bình thường, ấn Enter để xuống dòng.</div>
+        </div>
+
+        <div class="form-group">
+            <label>Kết quả đầu ra:</label>
+            <div class="output-box">
+                <span id="output-text" class="output-text">Chưa có nội dung hợp lệ...</span>
+                <button id="copy-btn" onclick="copyResult()">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+                        <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+                    </svg>
+                    Copy
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const inputEl = document.getElementById('input-text');
+        const outputEl = document.getElementById('output-text');
+        const copyBtn = document.getElementById('copy-btn');
+
+        function processText() {
+            let rawText = inputEl.value;
+
+            // Xử lý thông minh: Nếu dán từ Excel, các ô ngang cách nhau bằng dấu Tab (\t). 
+            // Ta thay thế dấu Tab bằng dấu xuống dòng hoặc xử lý gộp các dòng.
+            // Để hỗ trợ cả 2 kiểu (xuống dòng bằng Enter hoặc cách nhau bằng dấu Tab trên cùng 1 dòng),
+            // ta thay thế dấu Tab (\t) thành dấu xuống dòng (\n) trước khi xử lý.
+            rawText = rawText.replace(/\t/g, '\n');
+
+            const lines = rawText.split('\n');
+            let viParts = [];
+            let cnParts = [];
+
+            lines.forEach(line => {
+                if (!line.trim()) return;
+                const parts = line.split('|');
+                if (parts.length >= 2) {
+                    viParts.push(parts[0].trim());
+                    cnParts.push(parts[1].trim());
+                } else {
+                    viParts.push(line.trim());
+                }
+            });
+
+            let result = "";
+            if (viParts.length > 0 && cnParts.length > 0 && cnParts.some(p => p !== "")) {
+                result = `${viParts.join(' - ')} [${cnParts.join('-')}]`;
+            } else if (viParts.length > 0) {
+                result = viParts.join(' - ');
+            } else {
+                result = "Chưa có nội dung hợp lệ...";
+            }
+
+            outputEl.textContent = result;
+        }
+
+        function copyResult() {
+            const textToCopy = outputEl.textContent;
+            navigator.clipboard.writeText(textToCopy).then(() => {
+                const originalHTML = copyBtn.innerHTML;
+                copyBtn.innerHTML = `
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                    Đã Copy!
+                `;
+                copyBtn.classList.add('copied');
+                setTimeout(() => {
+                    copyBtn.innerHTML = originalHTML;
+                    copyBtn.classList.remove('copied');
+                }, 2000);
+            });
+        }
+
+        inputEl.addEventListener('input', processText);
+        processText();
+    </script>
+</body>
+
+</html>
